@@ -2,6 +2,9 @@ __author__ = 'arenduchintala'
 import gensim
 import sys
 import nltk
+import string
+from utilz import tokenize
+
 
 save_model = sys.argv[1]
 corpus_files = sys.argv[2:]
@@ -10,10 +13,8 @@ texts = []
 for cs in corpus_files:
     print 'reading', cs
     for doc in open(cs, 'r'):
-        texts.append(nltk.word_tokenize(doc.lower().decode('utf-8', 'ignore')))
-        #texts.append(doc.lower().split())
+        texts.append(tokenize(doc.decode('utf-8', 'ignore')))
 
-#texts = [[w for w in document.split()] for document in open('data/corpus', 'r').readlines()]
 print 'making dictionary...'
 dictionary = gensim.corpora.Dictionary(texts)
 dictionary.save(save_model + '.dict')
@@ -26,7 +27,7 @@ mm = gensim.corpora.MmCorpus(save_model + '.mm')
 tfidf = gensim.models.tfidfmodel.TfidfModel(corpus)
 tfidf.save(save_model + '.tfidf')
 print 'making lsi...'
-lsi = gensim.models.lsimodel.LsiModel(corpus=mm, id2word=dictionary, num_topics=300)
+lsi = gensim.models.lsimodel.LsiModel(corpus=mm, id2word=dictionary, num_topics=500)
 lsi.save(save_model + '.lsi')
 print tfidf[dictionary.doc2bow("a man and".lower().split())]
 print dictionary.doc2bow("a man and".lower().split())
