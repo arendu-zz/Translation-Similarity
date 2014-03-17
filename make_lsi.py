@@ -3,28 +3,31 @@ import gensim
 import sys
 import nltk
 
-text_file = sys.argv[1]
+save_model = sys.argv[1]
+corpus_files = sys.argv[2:]
 print 'making texts...'
 texts = []
-for doc in open(text_file, 'r'):
-    texts.append(nltk.word_tokenize(doc.lower()))
-    #texts.append(doc.lower().split())
+for cs in corpus_files:
+    print 'reading', cs
+    for doc in open(cs, 'r'):
+        texts.append(nltk.word_tokenize(doc.lower().decode('utf-8', 'ignore')))
+        #texts.append(doc.lower().split())
 
 #texts = [[w for w in document.split()] for document in open('data/corpus', 'r').readlines()]
 print 'making dictionary...'
 dictionary = gensim.corpora.Dictionary(texts)
-dictionary.save(text_file + '.dict')
+dictionary.save(save_model + '.dict')
 print 'making corpus...'
 corpus = []
 for text in texts:
     corpus.append(dictionary.doc2bow(text))
-gensim.corpora.MmCorpus.serialize(text_file + '.mm', corpus)
-mm = gensim.corpora.MmCorpus(text_file + '.mm')
+gensim.corpora.MmCorpus.serialize(save_model + '.mm', corpus)
+mm = gensim.corpora.MmCorpus(save_model + '.mm')
 tfidf = gensim.models.tfidfmodel.TfidfModel(corpus)
-tfidf.save(text_file + '.tfidf')
+tfidf.save(save_model + '.tfidf')
 print 'making lsi...'
-lsi = gensim.models.lsimodel.LsiModel(corpus=mm, id2word=dictionary, num_topics=5)
-lsi.save(text_file + '.lsi')
+lsi = gensim.models.lsimodel.LsiModel(corpus=mm, id2word=dictionary, num_topics=300)
+lsi.save(save_model + '.lsi')
 print tfidf[dictionary.doc2bow("a man and".lower().split())]
 print dictionary.doc2bow("a man and".lower().split())
 print 'lsi from dict', lsi[dictionary.doc2bow("a man and".lower().split())]
