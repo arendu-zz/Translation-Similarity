@@ -1,12 +1,14 @@
 __author__ = 'arenduchintala'
 import gensim
 import sys
+import nltk
 
 text_file = sys.argv[1]
 print 'making texts...'
 texts = []
 for doc in open(text_file, 'r'):
-    texts.append(doc.split())
+    texts.append(nltk.word_tokenize(doc.lower()))
+    #texts.append(doc.lower().split())
 
 #texts = [[w for w in document.split()] for document in open('data/corpus', 'r').readlines()]
 print 'making dictionary...'
