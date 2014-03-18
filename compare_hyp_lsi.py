@@ -22,7 +22,7 @@ def cosine_similarity(v1, v2):
 
 
 def get_vec(hyp):
-    vec = lsi[tfidf[dictionary.doc2bow(hyp)]]
+    vec = lsi[dictionary.doc2bow(hyp)]
     return vec
 
 
@@ -52,8 +52,13 @@ if __name__ == '__main__':
             correct += 1 if guess == answers[idx] and answers[idx] != 0 else 0
             print idx, 'hyp1:', "%.4f" % cs1, 'hyp2:', "%.4f" % cs2, 'guess:', guess, 'ans:', answers[idx]
 
-            if guess != answers[idx]:
-                print idx, hyp1, hyp2, ref
+            if guess != answers[idx] and abs(cs1 - cs2) > 0.4:
+                print idx
+                print hyp1, len(v_hyp1)
+                print hyp2, len(v_hyp2)
+                print t_hyp1
+                print t_hyp2
+                print ref
 
     print 'total check', incorrect + correct
     print 'incorrect', incorrect, float(incorrect) / float(incorrect + correct)
