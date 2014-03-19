@@ -58,7 +58,7 @@ if __name__ == '__main__':
         lm1 = (ref_lm / hyp1_lm)
         lm2 = (ref_lm / hyp2_lm)
         lmdiff = lm1 - lm2
-        if lmdiff == 0:
+        if lmdiff == 0 or csdiff == 0:
             pdb.set_trace()
         print [csdiff, lmdiff], answers[idx]
         X.append([csdiff, lmdiff])
