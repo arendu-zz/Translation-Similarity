@@ -27,7 +27,7 @@ mm = gensim.corpora.MmCorpus(save_model + '.mm')
 tfidf = gensim.models.tfidfmodel.TfidfModel(corpus)
 tfidf.save(save_model + '.tfidf')
 print 'making lsi...'
-lsi = gensim.models.lsimodel.LsiModel(corpus=mm, id2word=dictionary, num_topics=500)
+lsi = gensim.models.lsimodel.LsiModel(corpus=mm, id2word=dictionary, num_topics=10)
 lsi.save(save_model + '.lsi')
 print tfidf[dictionary.doc2bow("a man and".lower().split())]
 print dictionary.doc2bow("a man and".lower().split())
