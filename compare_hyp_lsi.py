@@ -1,9 +1,13 @@
 __author__ = 'arenduchintala'
-
+from sklearn.svm import SVC
 import gensim
 from math import sqrt
 from utilz import tokenize
 import sys
+import numpy as np
+import kenlm
+import pdb
+
 
 lsi = None
 dictionary = None
@@ -28,38 +32,38 @@ def get_vec(hyp):
 
 if __name__ == '__main__':
     model_prefix = sys.argv[1]
+    lm = kenlm.LanguageModel('data/corpus.news.50.arpa')
     answers = [int(i) for i in open('eval-data/dev.answers', 'r').readlines()]
     training_data = [tuple(i.split('|||')) for i in open('eval-data/hyp1-hyp2-ref').readlines()]
     lsi = gensim.models.lsimodel.LsiModel.load(model_prefix + '.lsi')
     dictionary = gensim.corpora.Dictionary.load(model_prefix + '.dict')
     tfidf = gensim.models.tfidfmodel.TfidfModel.load(model_prefix + '.tfidf')
-    incorrect = 0
-    correct = 0
-    for idx, (hyp1, hyp2, ref) in enumerate(training_data[:len(answers)]):
-        hyp1 = tokenize(hyp1)
-        hyp2 = tokenize(hyp2)
-        ref = tokenize(ref)
-        if answers[idx] != 0:
-            t_hyp1 = [h for h in hyp1 if h not in hyp2]
-            t_hyp2 = [h for h in hyp2 if h not in hyp1]
-            v_hyp1 = get_vec(t_hyp1)
-            v_hyp2 = get_vec(t_hyp2)
-            v_ref = get_vec(ref)
-            cs1 = cosine_similarity(v_hyp1, v_ref)
-            cs2 = cosine_similarity(v_hyp2, v_ref)
-            guess = 1 if cs1 > cs2 else -1
-            incorrect += 1 if guess != answers[idx] and answers[idx] != 0 else 0
-            correct += 1 if guess == answers[idx] and answers[idx] != 0 else 0
-            print idx, 'hyp1:', "%.4f" % cs1, 'hyp2:', "%.4f" % cs2, 'guess:', guess, 'ans:', answers[idx]
+    X = []
 
-            if guess != answers[idx] and abs(cs1 - cs2) > 0.4:
-                print idx
-                print hyp1, len(v_hyp1)
-                print hyp2, len(v_hyp2)
-                print t_hyp1
-                print t_hyp2
-                print ref
+    for idx, (hyp1_txt, hyp2_txt, ref_txt) in enumerate(training_data[:1000]):
+        hyp1 = tokenize(hyp1_txt)
+        hyp2 = tokenize(hyp2_txt)
+        ref = tokenize(ref_txt)
+        t_hyp1 = [h for h in hyp1 if h not in hyp2]
+        t_hyp2 = [h for h in hyp2 if h not in hyp1]
+        v_hyp1 = get_vec(t_hyp1)
+        v_hyp2 = get_vec(t_hyp2)
+        v_ref = get_vec(ref)
+        cs1 = cosine_similarity(v_hyp1, v_ref)
+        cs2 = cosine_similarity(v_hyp2, v_ref)
+        csdiff = cs1 - cs2
+        hyp1_lm = lm.score(hyp1_txt) / (len(hyp1) + 1)
+        hyp2_lm = lm.score(hyp2_txt) / (len(hyp2) + 1)
+        ref_lm = lm.score(ref_txt) / (len(ref) + 1)
+        lm1 = (ref_lm / hyp1_lm)
+        lm2 = (ref_lm / hyp2_lm)
+        lmdiff = lm1 - lm2
+        if lmdiff == 0:
+            pdb.set_trace()
+        print [csdiff, lmdiff], answers[idx]
+        X.append([csdiff, lmdiff])
+        #eprint idx, 'hyp1:', "%.4f" % cs1, 'hyp2:', "%.4f" % cs2, 'diff:', "%.4f" % abs(cs1 - cs2), 'ans:', answers[idx]
 
-    print 'total check', incorrect + correct
-    print 'incorrect', incorrect, float(incorrect) / float(incorrect + correct)
-    print 'correct', correct, float(correct) / float(incorrect + correct)
+    clf = SVC()
+    clf.kernel = 'poly'
+    clf.fit(np.array(X), np.array(answers[:1000]))
