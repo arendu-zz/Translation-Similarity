@@ -1,9 +1,7 @@
 __author__ = 'arenduchintala'
 import gensim
-import sys
-import nltk
-import string
-from utilz import tokenize
+import sys, pdb
+from utilz import tokenize, STOP_WORDS, VEC_LEN
 
 
 save_model = sys.argv[1]
@@ -13,7 +11,7 @@ texts = []
 for cs in corpus_files:
     print 'reading', cs
     for doc in open(cs, 'r'):
-        texts.append(tokenize(doc.decode('utf-8', 'ignore')))
+        texts.append(set([i for i in tokenize(doc.decode('utf-8', 'ignore')) if i not in STOP_WORDS]))
 
 print 'making dictionary...'
 dictionary = gensim.corpora.Dictionary(texts)
@@ -27,12 +25,12 @@ mm = gensim.corpora.MmCorpus(save_model + '.mm')
 tfidf = gensim.models.tfidfmodel.TfidfModel(corpus)
 tfidf.save(save_model + '.tfidf')
 print 'making lsi...'
-lsi = gensim.models.lsimodel.LsiModel(corpus=mm, id2word=dictionary, num_topics=10)
+lsi = gensim.models.lsimodel.LsiModel(corpus=mm, id2word=dictionary, num_topics=VEC_LEN)
 lsi.save(save_model + '.lsi')
-print tfidf[dictionary.doc2bow("a man and".lower().split())]
-print dictionary.doc2bow("a man and".lower().split())
-print 'lsi from dict', lsi[dictionary.doc2bow("a man and".lower().split())]
-print 'lsi from tfidf', lsi[tfidf[dictionary.doc2bow("a man and".lower().split())]]
+print 'tfidf values', tfidf[dictionary.doc2bow("a man great child and".lower().split())]
+print 'dict values', dictionary.doc2bow("a man great child and".lower().split())
+print 'lsi from dict', lsi[dictionary.doc2bow("a man great child and".lower().split())]
+print 'lsi from tfidf', lsi[tfidf[dictionary.doc2bow("a man great child and".lower().split())]]
 #print vec_lsi
 #vec_lsi = lsi[dictionary.doc2bow("man a and".lower().split())]
 #print vec_lsi
