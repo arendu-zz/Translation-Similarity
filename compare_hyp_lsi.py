@@ -77,15 +77,9 @@ if __name__ == '__main__':
         if lmdiff == 0 or csdiff == 0:
             pass  # pdb.set_trace()
         print idx, [csdiff, lmdiff], answers[idx], sample_weights[idx]
-        if len(get_array(v_hyp1)[:]) < 100:
-            pdb.set_trace()
-        print len(get_array(v_hyp2)[:])
 
         train_sample = [cs1, cs2, csdiff, lm1, lm2, lmdiff] + get_array(v_hyp1) + get_array(v_hyp2) + get_array(v_ref)
-        #print len(train_sample)
         X.append(train_sample)
-        #print len(X)
-        #X.append([csdiff, lmdiff])
 
     clf = SVC(kernel='linear')
     print np.shape(np.array(X)), np.shape(np.array(answers)), np.shape(np.array(sample_weights))
