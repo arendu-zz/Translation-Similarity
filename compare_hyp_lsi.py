@@ -4,11 +4,10 @@ from sklearn import cross_validation
 import gensim
 from math import sqrt
 from utilz import tokenize, STOP_WORDS, VEC_LEN
-import sys
+import pdb
 import numpy as np
 import kenlm
-import weighted as wt
-import matplotlib.pyplot as plt
+
 
 lsi = None
 dictionary = None
@@ -29,7 +28,7 @@ def cosine_similarity(v1, v2):
 def get_vec(hyp):
     hyp = [h for h in hyp if h not in STOP_WORDS]
     vec = lsi[dictionary.doc2bow(hyp)]
-    if len(vec) == 0:
+    if len(vec) < VEC_LEN:
         vec = [0.0] * VEC_LEN
         vec = zip(range(VEC_LEN), vec)
     return vec
@@ -56,7 +55,7 @@ if __name__ == '__main__':
     dictionary = gensim.corpora.Dictionary.load(model_prefix + '.dict')
     tfidf = gensim.models.tfidfmodel.TfidfModel.load(model_prefix + '.tfidf')
     X = []
-    for idx, (hyp1_txt, hyp2_txt, ref_txt) in enumerate(training_data[:len(answers[:1000])]):
+    for idx, (hyp1_txt, hyp2_txt, ref_txt) in enumerate(training_data[:len(answers)]):
         hyp1 = tokenize(hyp1_txt)
         hyp2 = tokenize(hyp2_txt)
         ref = tokenize(ref_txt)
@@ -76,20 +75,23 @@ if __name__ == '__main__':
         lm2 = (ref_lm / hyp2_lm)
         lmdiff = lm1 - lm2
         if lmdiff == 0 or csdiff == 0:
-            pass  #pdb.set_trace()
-        #print idx, [csdiff, lmdiff], answers[idx], sample_weights[idx]
+            pass  # pdb.set_trace()
+        print idx, [csdiff, lmdiff], answers[idx], sample_weights[idx]
+        if len(get_array(v_hyp1)[:]) < 100:
+            pdb.set_trace()
+        print len(get_array(v_hyp2)[:])
 
-        train_sample = [cs1, cs2, csdiff, lm1, lm2, lmdiff] + get_array(v_hyp1)[:99] + get_array(v_hyp2)[:99] + get_array(v_ref)[:99]
-        print len(train_sample)
+        train_sample = [cs1, cs2, csdiff, lm1, lm2, lmdiff] + get_array(v_hyp1) + get_array(v_hyp2) + get_array(v_ref)
+        #print len(train_sample)
         X.append(train_sample)
-        print len(X)
+        #print len(X)
         #X.append([csdiff, lmdiff])
 
     clf = SVC(kernel='linear')
-    print np.shape(np.array(X)), np.shape(np.array(answers[:1000])), np.shape(np.array(sample_weights[:1000]))
-    clf.fit(np.array(X), np.array(answers[:1000]), sample_weight=np.array(sample_weights[:1000]))
+    print np.shape(np.array(X)), np.shape(np.array(answers)), np.shape(np.array(sample_weights))
+    clf.fit(np.array(X), np.array(answers), sample_weight=np.array(sample_weights))
 
-    Z = clf.score(np.array(X), np.array(answers[:1000]))
+    Z = clf.score(np.array(X), np.array(answers))
     print Z
-    scores = cross_validation.cross_val_score(clf, np.array(X), np.array(answers[:1000]), cv=5)
+    scores = cross_validation.cross_val_score(clf, np.array(X), np.array(answers), cv=5)
     print scores, sum(scores) / len(scores)
