@@ -4,12 +4,12 @@ from sklearn import cross_validation
 import gensim
 from math import sqrt
 from utilz import tokenize, STOP_WORDS, VEC_LEN
-import pdb
+import sys
 import numpy as np
 import kenlm
 
 
-lsi = None
+vec_rep_model = None
 dictionary = None
 tfidf = None
 
@@ -27,7 +27,7 @@ def cosine_similarity(v1, v2):
 
 def get_vec(hyp):
     hyp = [h for h in hyp if h not in STOP_WORDS]
-    vec = lsi[dictionary.doc2bow(hyp)]
+    vec = vec_rep_model[dictionary.doc2bow(hyp)]
     if len(vec) < VEC_LEN:
         vec = [0.0] * VEC_LEN
         vec = zip(range(VEC_LEN), vec)
@@ -40,7 +40,8 @@ def get_array(vec):
 
 
 if __name__ == '__main__':
-    model_prefix = 'data/corpus_and_20'  #sys.argv[1]
+    model_prefix = sys.argv[1]
+    model_type = sys.argv[2]  # 'lsi'  # 'lda'
     lm = kenlm.LanguageModel('data/news.small.20.tok.arpa')
     answers = [int(i) for i in open('eval-data/dev.answers', 'r').readlines()]
     weights = {}
@@ -51,11 +52,14 @@ if __name__ == '__main__':
 
     sample_weights = [weights[i] for i in answers]
     training_data = [tuple([k.strip() for k in i.split('|||')]) for i in open('eval-data/hyp1-hyp2-ref').readlines()]
-    lsi = gensim.models.lsimodel.LsiModel.load(model_prefix + '.lsi')
+    if model_type == 'lsi':
+        vec_rep_model = gensim.models.lsimodel.LsiModel.load(model_prefix + '.lsi')
+    elif model_type == 'lda':
+        vec_rep_model = gensim.models.LdaModel.load(model_prefix + '.lda')
     dictionary = gensim.corpora.Dictionary.load(model_prefix + '.dict')
     tfidf = gensim.models.tfidfmodel.TfidfModel.load(model_prefix + '.tfidf')
     X = []
-    for idx, (hyp1_txt, hyp2_txt, ref_txt) in enumerate(training_data[:len(answers)]):
+    for idx, (hyp1_txt, hyp2_txt, ref_txt) in enumerate(training_data[:len(answers[5000:10000])]):
         hyp1 = tokenize(hyp1_txt)
         hyp2 = tokenize(hyp2_txt)
         ref = tokenize(ref_txt)
@@ -76,16 +80,16 @@ if __name__ == '__main__':
         lmdiff = lm1 - lm2
         if lmdiff == 0 or csdiff == 0:
             pass  # pdb.set_trace()
-        print idx, [csdiff, lmdiff], answers[idx], sample_weights[idx]
+        #print idx, [csdiff, lmdiff], answers[idx], sample_weights[idx]
 
         train_sample = [cs1, cs2, csdiff, lm1, lm2, lmdiff] + get_array(v_hyp1) + get_array(v_hyp2) + get_array(v_ref)
         X.append(train_sample)
 
     clf = SVC(kernel='linear')
-    print np.shape(np.array(X)), np.shape(np.array(answers)), np.shape(np.array(sample_weights))
-    clf.fit(np.array(X), np.array(answers), sample_weight=np.array(sample_weights))
+    print np.shape(np.array(X)), np.shape(np.array(answers[5000:10000])), np.shape(np.array(sample_weights[5000:10000]))
+    clf.fit(np.array(X), np.array(answers[5000:10000]), sample_weight=np.array(sample_weights[5000:10000]))
 
-    Z = clf.score(np.array(X), np.array(answers))
+    Z = clf.score(np.array(X), np.array(answers[5000:10000]))
     print Z
-    scores = cross_validation.cross_val_score(clf, np.array(X), np.array(answers), cv=5)
+    scores = cross_validation.cross_val_score(clf, np.array(X), np.array(answers[5000:10000]), cv=5)
     print scores, sum(scores) / len(scores)
