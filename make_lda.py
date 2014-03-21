@@ -25,7 +25,7 @@ mm = gensim.corpora.MmCorpus(save_model + '.mm')
 tfidf = gensim.models.tfidfmodel.TfidfModel(corpus)
 tfidf.save(save_model + '.tfidf')
 print 'making lda...'
-lda = gensim.models.ldamodel.LdaModel(corpus=mm, id2word=dictionary, num_topics=VEC_LEN, update_every=0, passes=20)
+lda = gensim.models.ldamodel.LdaModel(corpus=mm, id2word=dictionary, num_topics=VEC_LEN, update_every=1, chunksize=5000, passes=1)
 lda.save(save_model + '.lda')
 #lsi = gensim.models.lsimodel.LsiModel(corpus=mm, id2word=dictionary, num_topics=VEC_LEN)
 #lsi.save(save_model + '.lsi')
