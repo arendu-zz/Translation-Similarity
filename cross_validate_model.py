@@ -15,6 +15,9 @@ tfidf = None
 
 
 def cosine_similarity(v1, v2):
+    '''
+    expects v1 and v2 in the form [(0, 0.23422), (1, 0.982343), (2, 0.00012123)...]
+    '''
     vec1 = [i[1] for i in v1]
     vec2 = [i[1] for i in v2]
     mag1 = sqrt(sum([i ** 2 for i in vec1]))
@@ -40,6 +43,8 @@ def get_array(vec):
 
 
 if __name__ == '__main__':
+    st = 5000
+    sp = 10000
     model_prefix = sys.argv[1]
     model_type = sys.argv[2]  # 'lsi'  # 'lda'
     lm = kenlm.LanguageModel('data/news.small.20.tok.arpa')
@@ -59,7 +64,7 @@ if __name__ == '__main__':
     dictionary = gensim.corpora.Dictionary.load(model_prefix + '.dict')
     tfidf = gensim.models.tfidfmodel.TfidfModel.load(model_prefix + '.tfidf')
     X = []
-    for idx, (hyp1_txt, hyp2_txt, ref_txt) in enumerate(training_data[:len(answers[5000:10000])]):
+    for idx, (hyp1_txt, hyp2_txt, ref_txt) in enumerate(training_data[:len(answers[st:sp])]):
         hyp1 = tokenize(hyp1_txt)
         hyp2 = tokenize(hyp2_txt)
         ref = tokenize(ref_txt)
@@ -86,10 +91,10 @@ if __name__ == '__main__':
         X.append(train_sample)
 
     clf = SVC(kernel='linear')
-    print np.shape(np.array(X)), np.shape(np.array(answers[5000:10000])), np.shape(np.array(sample_weights[5000:10000]))
-    clf.fit(np.array(X), np.array(answers[5000:10000]), sample_weight=np.array(sample_weights[5000:10000]))
+    print np.shape(np.array(X)), np.shape(np.array(answers[st:sp])), np.shape(np.array(sample_weights[st:sp]))
+    clf.fit(np.array(X), np.array(answers[st:sp]), sample_weight=np.array(sample_weights[st:sp]))
 
-    Z = clf.score(np.array(X), np.array(answers[5000:10000]))
+    Z = clf.score(np.array(X), np.array(answers[st:sp]))
     print Z
-    scores = cross_validation.cross_val_score(clf, np.array(X), np.array(answers[5000:10000]), cv=5)
+    scores = cross_validation.cross_val_score(clf, np.array(X), np.array(answers[st:sp]), cv=5)
     print scores, sum(scores) / len(scores)
