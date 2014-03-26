@@ -1,5 +1,5 @@
 __author__ = 'arenduchintala'
-from sklearn.svm import LinearSVC
+from sklearn.svm import LinearSVC, NuSVC
 from sklearn.linear_model import LogisticRegression
 from sklearn import cross_validation
 import pickle
@@ -54,12 +54,14 @@ def get_vec(hyp, tf=False):
     return vec
 
 
-def get_array_one_hot(vec):
+def get_array_n_hot(vec):
+    n = int(len(vec) / 2)
     [idx, arr] = zip(*vec)
+    median = sorted(arr)[n]
     m_arr = max(arr)
     min_arr = min(arr)
     if m_arr > min_arr:
-        return [1 if a == m_arr else 0 for a in arr]
+        return [1 if a > median else 0 for a in arr]
     else:
         return [0.0] * len(arr)
 
@@ -91,14 +93,18 @@ def get_meteor_vec(h1, h2, ref, alpha):
 def get_cs_vec(h1, h2, ref):
     t_hyp1 = [h for h in h1 if h not in h2]
     t_hyp2 = [h for h in h2 if h not in h1]
-    v_hyp1 = get_vec(t_hyp1)
-    v_hyp2 = get_vec(t_hyp2)
-    v_ref = get_vec(ref)
+    v_hyp1 = get_vec(t_hyp1, True)
+    v_hyp2 = get_vec(t_hyp2, True)
+    v_ref = get_vec(ref, True)
     cs1 = cosine_similarity(v_hyp1, v_ref)
     cs2 = cosine_similarity(v_hyp2, v_ref)
-    csdiff = cs1 - cs2
-    lsi_vec = get_array(v_hyp1, normalize=True) + get_array(v_hyp2, normalize=True) + get_array(v_ref, normalize=True)
-    lsi_vec += get_array_one_hot(v_hyp1) + get_array_one_hot(v_hyp2) + get_array_one_hot(v_ref)
+    csdiff = abs(cs1 - cs2)
+    lsi_vec = []
+    lsi_vec += get_array(v_hyp1, normalize=True) + get_array(v_hyp2, normalize=True) + get_array(v_ref, normalize=True)
+    nh1 = get_array_n_hot(v_hyp1)
+    nh2 = get_array_n_hot(v_hyp2)
+    nref = get_array_n_hot(v_ref)
+    lsi_vec += [x * y for x, y in zip(nh1, nref)] + [x * y for x, y in zip(nh2, nref)]
     if cs1 > cs2:
         return [1, 0, 0, cs1, cs2, csdiff] + lsi_vec
     elif cs2 > cs1:
@@ -113,7 +119,7 @@ def get_lm_vec(h1, h2, ref):
     ref_lm = lm.score(' '.join(ref)) / (len(ref) + 1)
     lm1 = (ref_lm / hyp1_lm)
     lm2 = (ref_lm / hyp2_lm)
-    lmdiff = lm1 - lm2
+    lmdiff = abs(lm1 - lm2)
     if lm1 > lm2:
         return [1, 0, 0, lm1, lm2, lmdiff]
     elif lm2 > lm1:
@@ -165,9 +171,9 @@ if __name__ == '__main__':
         train_sample += m_vec
         X.append(train_sample)
 
-    clf = LinearSVC(class_weight=weights)
+    clf = NuSVC(kernel='rbf', cache_size=6000)
     print np.shape(np.array(X)), np.shape(np.array(answers[st:sp])), np.shape(np.array(sample_weights[st:sp]))
-    clf.fit(np.array(X), np.array(answers[st:sp]))  #, sample_weight=np.array(sample_weights[st:sp]))
+    clf.fit(np.array(X), np.array(answers[st:sp]), sample_weight=np.array(sample_weights[st:sp]))
 
     Z = clf.score(np.array(X), np.array(answers[st:sp]))
     print Z

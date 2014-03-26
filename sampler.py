@@ -1,5 +1,6 @@
 __author__ = 'arenduchintala'
 import sys
+
 if __name__ == '__main__':
     # script here
     sample = int(sys.argv[1])
