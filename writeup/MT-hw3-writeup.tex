@@ -36,7 +36,7 @@ systems were compared against a human generated reference translation. The task
 is to automatically detect which one of the 2 MT outputs were closer to the
 human generated output. The automatic evaluation was setup as a 3-way
 classification task. The 3 possible labels are (a) hypothesis of MT system 1
-was closest to the reference, (b) hypothesis of system 2 was closeset to the
+was closest to the reference, (b) hypothesis of system 2 was closest to the
 reference or (c) both systems were equidistant from the reference.This paper
 presents an approach using a Vector Space model and a Language model scores to 
 generate training examples for the classification task. An of-the-shelf Support 
@@ -49,9 +49,9 @@ assign a continuous valued vector to each word type in a corpus.\\
 \begin{align*}                                                                                                                                                                   
 \vec{x} &= \{ x_1, x_2, \ldots, x_n\}
 \end{align*}
- This enables the computatioin of mathematical metrics such as distance or
+ This enables the computation of mathematical metrics such as distance or
  similarity. This gives us a clear way to compare the 2 machine translation
- hypothesis to the reference. First each of the translations were converted to
+ hypotheses to the reference. First each of the translations were converted to
  their vector representation. This was done using an of-the-shelf Latent
  Semantic Indexing toolkit (\cite{rehurek_lrec}).\\ The process essentially
  involves constructing a term-document matrix (\cite{turney2010frequency}).
@@ -65,7 +65,7 @@ assign a continuous valued vector to each word type in a corpus.\\
  process. Once individual word vectors are obtained, there are several very
  interesting methods to compose word vectors into phrase/sentence vectors,
  (\cite{hermann2013role},\cite{socher2012semantic}), but for this assignment
- simple elemental average was used. Cosine Similarity (CS) was used to measure which of the 2 hypothesis were closer to the reference. CS is robust to sparsity and is very commonly used for IR tasks. Unlike euclidean distance, CS is returns the angular separation of the 2 vectors.
+ simple elemental average was used. Cosine Similarity (CS) was used to measure which of the 2 hypotheses were closer to the reference. CS is robust to sparsity and is very commonly used for IR tasks. Unlike euclidean distance, CS is returns the angular separation of the 2 vectors.
  \begin{align*}
  cos(\vec{a},\vec{b}) &= \frac{\vec{a}\cdot \vec{b}}{\mid\vec{a}\mid
  \mid\vec{b}\mid}
@@ -74,12 +74,12 @@ assign a continuous valued vector to each word type in a corpus.\\
  produced by the metric is between +1 (strong similarity) and -1 (strong
  opposition). A cosine similarity of 0 means the 2 vectors are orthogonal to
  each other. For our task, this is how the difference in meaning of the
- hypothesis sentences and the reference sentence is modeled.
+ hypotheses  and the reference  is modeled.
  \section{Language Model}
  In order to automatically select the better hypothesis, merely using a bag of
  words based vector space model is not enough. The vector model makes no
- structural requirements from hypothesis. To capture how well-formed the 2
- hypothesis are, a simple n-gram language model score was computed. Since the
+ structural requirements from the hypothesis. To capture how well-formed the
+ 2 hypotheses are, a simple n-gram language model score was computed. Since the
  data provided was only around 2000 unique references, a larger corpus was used
  to train a trigram language model. The ACL 2013 Shared Task in Machine
  Translation provided a large set of corpora, a portion of the 2012 news crawl
@@ -98,8 +98,8 @@ score metric.
 The Meteor metric is a commonly used MT evaluation baseline
 (\cite{koehn2010statistical}).
 \begin{align*}
-R(hyp,ref) &= \frac{\mid hyp \cap ref}{\mid ref \mid}\\
-P(hyp,ref) &= \frac{\mid hyp \cap ref}{\mid hyp \mid}\\
+R(hyp,ref) &= \frac{\mid hyp \cap ref \mid}{\mid ref \mid}\\
+P(hyp,ref) &= \frac{\mid hyp \cap ref \mid}{\mid hyp \mid}\\
 \end{align*}
 In our case we compute $R_1 = R(hyp_1, ref), P_1 = P(hyp_1,ref)$ and $R_2 =
 R(hyp_2, ref), P_2 = P(hyp_2, ref)$. From this we compute the meteor scores
@@ -129,7 +129,7 @@ token is associated with a vector $\vec{x}\in \mathbb{R}^n$.
 Since we employed simple element-wise averaging we again obtain a vector
 $\vec{x_p} \in \mathbb{R}^n$, where $\vec{x_p}$ represents the vector for a bag
 of words. The choice of $n$ is arbitrary, a value of 100 was chosen for
-our expriments, we also verified that higher values gave slightly better
+our experiments, we also verified that higher values gave slightly better
 performance.\\
 First, the hypotheses (hyp1, hyp2) and the reference phrases are
 tokenized. Often there is a lot of word overlap between the hypotheses, to take
@@ -207,7 +207,7 @@ Thus the total set of features at our disposal from the vector space model are
   features. These feature set has $2n$ elements.
 \end{enumerate}
 \subsection{Language Model Features}
-The M and CS features show similarity of the hypothesis to the reference, while
+The M and CS features show similarity of the hypotheses to the reference, while
 the LM features encode into the feature vector how well formed the hypotheses
 are. KenLM was used to compute this score for each hypotheses and for the
 reference. Using the raw LM score could result in a mis-informed classifier.
@@ -244,11 +244,11 @@ behind tf-idf weighting is that very popular tokens (eg. stop words) would
 appear in many documents and should not be weighted as much as seeing a
 relatively rare word. This is typically used in IR tasks, where we do not want
 to match document to a query based on common words. In this task, we can use the
-tfifd weight of a word to scale the word vector. Binary weighting, as the name
+tf-idf weight of a word to scale the word vector. Binary weighting, as the name
 suggests would simply scale the word vector by 1 (no scaling).
 \subsection{LDA vs LSA}
 The Gensim toolkit provides easy interface to generate VSM models, but it also
-traings topic models. This allows for an alternate vector representation of the
+trains topic models. This allows for an alternate vector representation of the
 words. Once a topic model is trained, we can look up the distribution of a word
 over the number of topics. This is a multinomial dirichlet than can  easily
 substitute the LSA word vector.
@@ -256,7 +256,7 @@ substitute the LSA word vector.
 In this section, we test all of the feature sets and other tunable attributes on
 the first 10,000 data points provided. This was mainly done to speed up turn
 around time of the intermediate results. The \cite{scikit-learn} toolkit was used for
-classification, an multi-class SVM was used with an RBF kernel. 
+classification, an  Nu-SVM was used with an RBF kernel. 
 The table below shows the average accuracy after running 3-fold cross validation. 
 These numbers could also be increased by increasing the size of the word vector 
 representation (or number of topics for LDA), but to get fast results we limited the size to 100.
