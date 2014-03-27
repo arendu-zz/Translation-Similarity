@@ -31,7 +31,6 @@
 
 
 \section{Introduction}
-
 In this assignment  outputs of 2 machine translation (MT)
 systems were compared against a human generated reference translation. The task
 is to automatically detect which one of the 2 MT outputs were closer to the
@@ -42,7 +41,6 @@ reference or (c) both systems were equidistant from the reference.This paper
 presents an approach using a Vector Space model and a Language model scores to 
 generate training examples for the classification task. An of-the-shelf Support 
 Vector Machine (SVM) classifier was used.
-
 
 \section{Vector Space Model}
 Vector Space Models (VSM) has been used extensively for information retrieval
@@ -55,7 +53,7 @@ assign a continuous valued vector to each word type in a corpus.\\
  similarity. This gives us a clear way to compare the 2 machine translation
  hypothesis to the reference. First each of the translations were converted to
  their vector representation. This was done using an of-the-shelf Latent
- Semantic Indexing toolkit (\cite{rehurek_lrec}). The process essentially
+ Semantic Indexing toolkit (\cite{rehurek_lrec}).\\ The process essentially
  involves constructing a term-document matrix (\cite{turney2010frequency}).
  Singular Value Decomposition (SVD) is applied to this matrix. The resulting singular value matrix is
  truncated and using this truncated SV matrix a truncated (or low-rank)
@@ -85,8 +83,9 @@ assign a continuous valued vector to each word type in a corpus.\\
  data provided was only around 2000 unique references, a larger corpus was used
  to train a trigram language model. The ACL 2013 Shared Task in Machine
  Translation provided a large set of corpora, a portion of the 2012 news crawl
- corpus was used to train our LM. KenLM was used to for training and for scoring a
- sentence (\cite{heafield2011kenlm}). Using the LM scores, Cosine Similarity
+ corpus was used to train our LM.\\
+  KenLM was used to for training and for
+ scoring a sentence (\cite{heafield2011kenlm}). Using the LM scores, Cosine Similarity
  scores and the vector representations themselves training features were created
  which were in turn used to train an SVM classifier. In the next section we will
  discuss the feature engineering used to come up with the training samples for
@@ -131,7 +130,8 @@ Since we employed simple element-wise averaging we again obtain a vector
 $\vec{x_p} \in \mathbb{R}^n$, where $\vec{x_p}$ represents the vector for a bag
 of words. The choice of $n$ is arbitrary, a value of 100 was chosen for
 our expriments, we also verified that higher values gave slightly better
-performance. First, the hypotheses (hyp1, hyp2) and the reference phrases are
+performance.\\
+First, the hypotheses (hyp1, hyp2) and the reference phrases are
 tokenized. Often there is a lot of word overlap between the hypotheses, to take
 advantage of this we compute the set subtraction of hyp1 from hyp2 and extract
 the bag of words vector that represents the result of this subtraction. The same
@@ -139,7 +139,8 @@ was done for hyp2 as well. For example if hyp1 is \emph{Looking in the cities}
 and hyp2 is \emph{Looking at the towns}, hyp1 is updated to the set of tokens \{
 in, cities\} and hyp2 is updated to the set of tokens \{ at, towns\}. These
 tokens are used to compute the vectors. Using the vectors the cosine similarity
-was from each hypothesis to the reference was computed. The set of equations
+was from each hypothesis to the reference was computed.\\
+ The set of equations
 below show all of the operations performed to get the vector space features.
 Apart from just the cosine scores, we found added on/off features helpful. The
 equations for $f_1, f_2$ and $f_3$ show how the on/off features were computed.
@@ -196,7 +197,6 @@ In the expressions below $bin()$ represents the binarization described above.
 \end{align*}
 Thus the total set of features at our disposal from the vector space model are
 \begin{enumerate}
-  \item M Features: the meteor score based binary vector.
   \item CS Features: The cosine similarity metric scores ($cs_1$,$cs_2$,$cs_d$)
   and the associated indicator elements ($f_1$,$f_2$,$f_3$). There are exactly 6
   elements in this feature set.
@@ -256,7 +256,10 @@ substitute the LSA word vector.
 In this section, we test all of the feature sets and other tunable attributes on
 the first 10,000 data points provided. This was mainly done to speed up turn
 around time of the intermediate results. The \cite{scikit-learn} toolkit was used for
-classification, an multi-class SVM was used with an RBF kernel. The table below shows the average accuracy after running 3-fold cross validation. These numbers could also be increased by increasing the size of the word vector representation (or number of topics for LDA), but to get fast results we limited the size to 100.
+classification, an multi-class SVM was used with an RBF kernel. 
+The table below shows the average accuracy after running 3-fold cross validation. 
+These numbers could also be increased by increasing the size of the word vector 
+representation (or number of topics for LDA), but to get fast results we limited the size to 100.
 \begin{table}[h]
 \begin{center}
 \begin{singlespace}
@@ -282,8 +285,8 @@ weighting scheme does help improve over the simple 1/0 scaling of word vectors.
 The accuracy generated by the LDA model is significantly lower than the LSA
 model. There could be 2 explanations for this: Firstly, cosine similarity might
 not be the best metric to measure the similarity of 2 distributions, to remedy this
-KL-divergence was used, however even with KL divergence similar results were
-observed. Secondly, it is possible that LDA requires much later training corpus
+KL-divergence was tried instead of cosine similarity, however even with KL
+divergence similar results were observed. Secondly, it is possible that LDA requires much later training corpus
 to generate robust word vectors. To expedite training of these models a subset
 of the 2012 news crawl data set was used (around 75000 lines). This is probably
 low for LDA.\\
@@ -306,8 +309,10 @@ follow a very similar trend noticed in the smaller test.\\
 \end{center}
 \caption{ Accuracy on full 25000 training samples with 3-fold cross validation.}
 \end{table}
-Since this indicated that the training scales to a larger data set, the winning
-model was submitted. However the only scored 0.47 on the unseen test set.
+We observe accuracy similar trends on the full development set.This indicates
+that the training paradigm scales to a larger data set.The winning CMLFI model's
+predictions were submitted,but this model only scored 0.47 on the unseen test
+set.
 \bibliographystyle{plainnat}
 \bibliography{bib}{} 
 \end{document}
