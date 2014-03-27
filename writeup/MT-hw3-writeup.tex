@@ -12,8 +12,10 @@
 \usepackage{times}
 \usepackage{latexsym}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{multirow}
 \usepackage{url}
+\usepackage{setspace} 
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage[round]{natbib}
@@ -72,7 +74,9 @@ assign a continuous valued vector to each word type in a corpus.\\
  document level vector representations, which is known as Latent Semantic
  Indexing (LSI). Both operations, however, involve the same mathematical
  process. Once individual word vectors are obtained, there are several very
- interesting methods to compose word vectors into phrase/sentence vectors but for this assignment simple elemental average was used. Cosine Similarity (CS) was used to measure which of the 2 hypothesis were closer to the reference. CS is robust to sparsity and is very commonly used for IR tasks. Unlike euclidean distance, CS is returns the angular separation of the 2 vectors.
+ interesting methods to compose word vectors into phrase/sentence vectors,
+ (\cite{hermann2013role},\cite{socher2012semantic}), but for this assignment
+ simple elemental average was used. Cosine Similarity (CS) was used to measure which of the 2 hypothesis were closer to the reference. CS is robust to sparsity and is very commonly used for IR tasks. Unlike euclidean distance, CS is returns the angular separation of the 2 vectors.
  \begin{align*}
  cos(\vec{a},\vec{b}) &= \frac{\vec{a}\cdot \vec{b}}{\mid\vec{a}\mid
  \mid\vec{b}\mid}
@@ -88,261 +92,182 @@ assign a continuous valued vector to each word type in a corpus.\\
  structural requirements from hypothesis. To capture how well-formed the 2
  hypothesis are, a simple n-gram language model score was computed. Since the
  data provided was only around 2000 unique references, a larger corpus was used
- to train a trigram language model. The ACL 2013 Shared Task: Machine
+ to train a trigram language model. The ACL 2013 Shared Task in Machine
  Translation provided a large set of corpora, a portion of the 2012 news crawl
  corpus was used to train our LM. KenLM was used to for training and for scoring a
- sentence\cite{heafield2011kenlm}.
- 
-  Manuscripts must be in two-column format. Exceptions to the two-column
- format include the title, authors' names and complete addresses, which must be centered at the top of the first page, 
-and any full-width figures or tables (see the guidelines in Subsection~\ref{ssec:first}). {\bf Type single-spaced}. 
-Start all pages directly under the top margin. See the guide-lines later regarding formatting the first page. Do not number the pages.
-
-\subsection{Electronically-available resources}
-
-ACL2012 provides this description in \LaTeX2e (acl2012.tex) and PDF format (acl2012.pdf), along with the LATEX2e style file used to format it (acl2012.sty) and an ACL bibliography style (acl.bst). These files are all available at \url{http://www.acl2012.org}.  A Microsoft Word template file (acl2012.dot) is also available at the same URL. We strongly recommend the use of these style files, which have been appropriately tailored for the ACL2012 proceedings. If you have an option, we recommend that you use the \LaTeX2e version. \textbf{If you will be using the Microsoft Word template, we suggest that you anonymize your source file so that the pdf produced does not retain your identity.} This can be done by removing any personal information from your source
-document properties.
-
-
-\subsection{Format of Electronic Manuscript}
-\label{sect:pdf}
-
-For the production of the electronic manuscript you must use Adobe's
-Portable Document Format (PDF). This format can be generated from
-postscript files: on Linux/Unix systems, you can use {\tt ps2pdf} for this
-purpose; under Microsoft Windows, you can use Adobe's Distiller, or
-if you have {\tt cygwin} installed, you can use {\tt dvipdf} or
-{\tt ps2pdf}.  Note
-that some word processing programs generate PDF which may not include
-all the necessary fonts (esp. tree diagrams, symbols). When you print
-or create the PDF file, there is usually an option in your printer
-setup to include none, all or just non-standard fonts.  Please make
-sure that you select the option of including ALL the fonts.  {\em Before sending it, test your PDF by printing it from a computer different from the one where it was created}. Moreover,
-some word processor may generate very large postscript/PDF files,
-where each page is rendered as an image. Such images may reproduce
-poorly.  In this case, try alternative ways to obtain the postscript
-and/or PDF.  One way on some systems is to install a driver for a
-postscript printer, send your document to the printer specifying
-``Output to a file'', then convert the file to PDF.
-
-Additionally, it is of utmost importance to specify the {\bf US-Letter format} (8.5in $\times$ 11in) when formatting the paper. When working with {\tt dvips}, for instance, one should specify {\tt -t letter}.
-
-Print-outs of the PDF file on US-Letter paper should be identical to the
-hardcopy version.  If you cannot meet the above requirements about the
-production of your electronic submission, please contact the
-publication chair above as soon as possible.
-
-
-\subsection{Layout}
-\label{ssec:layout}
-
-Format manuscripts two columns to a page, in the manner these
-instructions are formatted. The exact dimensions for a page on US-letter
-paper are:
-
-\begin{itemize}
-\item Left and right margins: 1in
-\item Top margin:1in
-\item Bottom margin: 1in
-\item Column width: 3.15in
-\item Column height: 9in
-\item Gap between columns: 0.2in
-\end{itemize}
-
-\noindent  Papers should not be submitted on any other paper size. If you
-cannot meet the above requirements about the production of your electronic submission, please contact the publication chair above as soon as possible.
-
-\subsection{Fonts}
-
-For reasons of uniformity, Adobe's {\bf Times Roman} font should be
-used. In \LaTeX2e{} this is accomplished by putting
-
-\begin{quote}
-\begin{verbatim}
-\usepackage{times}
-\usepackage{latexsym}
-\end{verbatim}
-\end{quote}
-in the preamble. If Times Roman is unavailable, use {\bf Computer
-  Modern Roman} (\LaTeX2e{}'s default).  Note that the latter is about
-  10\% less dense than Adobe's Times Roman font.
-
-
+ sentence\cite{heafield2011kenlm}. Using the LM scores, Cosine Similarity
+ scores and the vector representations themselves training features were created
+ which were in turn used to train an SVM classifier. In the next section we will
+ discuss the feature engineering used to come up with the training samples for
+ classification.
+ \section{Feature Engineering}
+In this section we will go over a number of features that were created using
+outputs form the Language model and the vector space model.
+\subsection{Vector Space Features}
+ We also augmented the corpus from which the LSA model was computed,
+with a portion of the 2012 news crawl corpus form 2013 ACL shared task in
+machine translation.Recall that once the LSA model was constructed for each 
+token is associated with a vector $\vec{x}\in \mathbb{R}^n$.
+Since we employed simple element-wise averaging we again obtain a vector
+$\vec{x_p} \in \mathbb{R}^n$, where $\vec{x_p}$ represents the vector for a bag
+of words. The choice of $n$ is arbitrary, a value of 100 was chosen for
+our expriments, we also verified that higher values gave slightly better
+performance. First, the hypotheses (hyp1, hyp2) and the reference phrases are
+tokenized. Often there is a lot of word overlap between the hypotheses, to take
+advantage of this we compute the set subtraction of hyp1 from hyp2 and extract
+the bag of words vector that represents the result of this subtraction. The same
+was done for hyp2 as well. For example if hyp1 is \emph{Looking in the cities}
+and hyp2 is \emph{Looking at the towns}, hyp1 is updated to the set of tokens \{
+in, cities\} and hyp2 is updated to the set of tokens \{ at, towns\}. These
+tokens are used to compute the vectors. Using the vectors the cosine similarity
+was from each hypothesis to the reference was computed. The set of equations
+below show all of the operations performed to get the vector space features.
+Apart from just the cosine scores, we found added on/off features helpful. The
+equations for $f_1, f_2$ and $f_3$ show how the on/off features were computed.
+\begin{align*}
+h_1 &= hyp_1 - hyp_2\\
+h_2 &= hyp_2 - hyp_1\\
+\vec{x_1} &= \frac{1}{\mid h_1 \mid} \sum \limits_{h\in h_1} vec(h)\\
+\vec{x_2} &= \frac{1}{\mid h_2 \mid} \sum \limits_{h\in h_2} vec(h)\\
+\vec{r} &= \frac{1}{\mid ref \mid} \sum \limits_{h \in ref} vec(h)\\
+cs_1 &= \frac{\vec{x_1}\cdot\vec{r}}{\mid \vec{x_1}\mid \mid \vec{r} \mid}\\
+cs_2 &= \frac{\vec{x_2}\cdot\vec{r}}{\mid \vec{x_2}\mid \mid \vec{r} \mid}\\
+cs_d &= \mid cs_1 - cs_2 \mid\\
+f_1 &= \begin{cases} 1 &\mbox{if } cs_1 > cs_2 \\
+0 \\
+\end{cases}\\
+f_2 &= \begin{cases} 1 &\mbox{if } cs2 > cs 1\\
+0\\
+\end{cases}\\
+f_3 &= \begin{cases} 1 &\mbox{if } cs1 =cs_2\\
+0\\
+\end{cases}\\
+\vec{CS} &= [f_1, f_2, f_3, cs_1, cs_2, cs_d]
+\end{align*}
+This feature vector does not give the SVM a chance to learn which elements in
+the word vectors are important for classification. It is possible that some
+elements (by position) in a word vector are more useful for classification. To
+incorporate this information, the full vectors $\vec{x_1}, \vec{x_2}$ and
+$\vec{r}$ were normalized and added to the training sample. The normalization
+ensured that the element values were between 0 and 1. This is expressed below,
+the addition operator concatenates the vectors.
+\begin{align*}
+\vec{FULL} &= norm(\vec{x_1}) +norm(\vec{x_2})+ norm(\vec{r})\\ 
+\end{align*}
+But even with the $\vec{FULL}$ vector there is no explicit information which
+indicates how which elements indexes in the 3 vectors contain similar values. To
+add this information, the phrase vectors where binarized using the following
+scheme. Let $\vec{x}$ be a normalized phrase vector (either for hyp1, hyp2 or
+reference). Each element $x_i \in \vec{x}$ is made 1 if its greater than the
+median value in $\vec{x}$ otherwise it is set to 0.
+\begin{align*}
+x_i &= \begin{cases} 1 &\mbox{if } x_i > median(\vec{x})\\
+0\\
+\end{cases}
+\end{align*}
+This binarization scheme was applied to each of the phrase vectors (hyp1, hyp2
+and reference). Then an element-wise intersection (or multiplication) was
+performed on binarized hypotheses with the binarized reference vectors. The
+binarized intersections were concatenated and this was used as features as well.
+In the expressions below $bin()$ represents the binarization described above.
+\begin{align*}
+\vec{BI_1} &= bin(\vec{x_1}) \cap bin(\vec{r})\\
+\vec{BI_2} &= bin(\vec{x_2}) \cap bin(\vec{r})\\
+\vec{INT} &= \vec{BI_1} + \vec{BI_2}\\
+\end{align*}
+Thus the total set of features at our disposal from the vector space model are
+\begin{enumerate}
+  \item CS Features: The cosine similarity metric scores ($cs_1$,$cs_2$,$cs_d$)
+  and the associated indicator elements ($f_1$,$f_2$,$f_3$). There are exactly 6
+  elements in this feature set.
+  \item FULL Features: These are the 'dump' of the full normalized phrase
+  vectors for the hypotheses and the reference. This feature set has $3n$
+  elements given that each phrase/word vector is $\mathbb{R}^n$
+  \item INT Features: These are the binarized and intersected (with reference)
+  features. These feature set has $2n$ elements.
+\end{enumerate}
+\subsection{Language Model Features}
+The LM features encode into the feature vector how well formed the hypotheses
+are. KenLM was used to compute this score for each hypotheses and for the
+reference. Using the raw LM score could result in a mis-informed classifier.
+Consider the case where hyp1 is a one-word translation while hyp2 is a longer
+phrase. Even if hyp2 is well formed, the fact that it has more to tokens will
+severely reduce its LM score. To counter this, the LM scores were computed per
+token. The scale of the LM scores are very different from the VSM features, in
+order to restrict the feature scale the following operations were applied.
+\begin{align*}
+lms_1 &= \frac{score(hyp1)} {\mid hyp1 \mid}\\
+lms_2 &= \frac{score(hyp2)} {\mid hyp2 \mid}\\
+lms_r &= \frac{score(ref)} {\mid ref \mid}\\
+lm_1 &= \frac{lms_r}{lms_1}\\
+lm_2 &= \frac{lms_r}{lms_2}\\
+lm_d &= \mid lm_1 - lm_2 \mid\\
+l_1 &= \begin{cases} 1 &\mbox{if } lm_1 > lm_2\\
+0\\
+\end{cases}\\
+l_2 &= \begin{cases} 1 &\mbox{if } lm_1 < lm_2\\
+0\\
+\end{cases}\\
+l_3 &= \begin{cases} 1 &\mbox{if } lm_1 = lm_2\\
+0\\
+\end{cases}\\
+\vec{LM} &= [l_1, l_2, l_3, lm_1, lm_2, lm_d]\\
+\end{align*}
+\section{Experiments}
+Apart form experimenting with different feature sets, different attributes
+within the VSM were also tested. The following sections describe these
+properties that were experimented with.
+\subsection{TF-IDF Vs Binary Weighting}
+Term Frequency-Inverse Document Frequency is a of weighting tokens. The idea
+behind tf-idf weighting is that very popular tokens (eg. stop words) would
+appear in many documents and should not be weighted as much as seeing a
+relatively rare word. This is typically used in IR tasks, where we do not want
+to match document to a query based on common words. In this task, we can use the
+tfifd weight of a word to scale the word vector. Binary weighting, as the name
+suggests would simply scale the word vector by 1 (no scaling).
+\subsection{LDA vs LSA}
+The Gensim toolkit provides easy interface to generate VSM models, but it also
+traings topic models. This allows for an alternate vector representation of the
+words. Once a topic model is trained, we can look up the distribution of a word
+over the number of topics. This is a multinomial dirichlet than can  easily
+substitute the LSA word vector.
+\subsection{Initial Results}
+In this section, we test all of the feature sets and other tunable attributes on
+the first 10,000 data points provided. This was mainly done to speed up turn
+around time of the intermediate results. The \cite{scikit-learn} toolkit was
+used for classification, an multi-class SVM was used with an RBF kernel. The table below
+shows the average accuracy after running 3-fold cross validation. These numbers could also be increased by increasing the size of the word vector representation (or number
+of topics for LDA), but to get fast results we limited the size to 100.
 \begin{table}[h]
 \begin{center}
-\begin{tabular}{|l|rl|}
-\hline \bf Type of Text & \bf Font Size & \bf Style \\ \hline
-paper title & 15 pt & bold \\
-author names & 12 pt & bold \\
-author affiliation & 12 pt & \\
-the word ``Abstract'' & 12 pt & bold \\
-section titles & 12 pt & bold \\
-document text & 11 pt  &\\
-captions & 11 pt & \\
-abstract text & 10 pt & \\
-bibliography & 10 pt & \\
-footnotes & 9 pt & \\
+\begin{singlespace}
+\begin{tabular}{|l|l|l|l|l|}
+\hline \bf Features & \bf LSA & \bf TFIDF  & \bf LDA \\ \hline
+1.CL &0.432& 0.410 & 0.436\\
+2.CLF &0.580 & 0.597&0.411\\
+3.CLI & 0.620 & 0.629&0.406\\
+4.CLFI&0.616& 0.629&0.37 \\
 \hline
 \end{tabular}
+\end{singlespace}
 \end{center}
-\caption{\label{font-table} Font guide. }
+\caption{ Accuracy on first 10000 training samples with 3-fold cross validation.
+  (1) CL = CS and LM features, 
+  (2) CLF = CS, LM and FULL features,
+  (3) CLI = CS, LM and INT features,
+  (4) CLFI = CS, LM, FULL and INT}
 \end{table}
-
-\subsection{The First Page}
-\label{ssec:first}
-
-Center the title, author's name(s) and affiliation(s) across both
-columns. Do not use footnotes for affiliations.  Do not include the
-paper ID number assigned during the submission process.
-Use the two-column format only when you begin the abstract.
-
-{\bf Title}: Place the title centered at the top of the first page, in
-a 15 point bold font.  (For a complete guide to font sizes and styles, see Table~\ref{font-table}.)
-Long title should be typed on two lines without
-a blank line intervening. Approximately, put the title at 1in from the
-top of the page, followed by a blank line, then the author's names(s),
-and the affiliation on the following line.  Do not use only initials
-for given names (middle initials are allowed). Do not format surnames
-in all capitals (e.g., ``Zhou,'' not ``ZHOU'').  The affiliation should
-contain the author's complete address, and if possible an electronic
-mail address. Leave about 0.75in between the affiliation and the body
-of the first page. The title, author names and addresses should be completely identical to those entered to the electronic paper submission website in order to maintain the consistency of author information among all publications of the conference.
-
-{\bf Abstract}: Type the abstract at the beginning of the first
-column.  The width of the abstract text should be smaller than the
-width of the columns for the text in the body of the paper by about
-0.25in on each side.  Center the word {\bf Abstract} in a 12 point
-bold font above the body of the abstract. The abstract should be a
-concise summary of the general thesis and conclusions of the paper.
-It should be no longer than 200 words. The abstract text should be in 10 point font.
-
-{\bf Text}: Begin typing the main body of the text immediately after
-the abstract, observing the two-column format as shown in
-the present document. Do not include page numbers.
-
-{\bf Indent} when starting a new paragraph. For reasons of uniformity,
-use Adobe's {\bf Times Roman} fonts, with 11 points for text and
-subsection headings, 12 points for section headings and 15 points for
-the title.  If Times Roman is unavailable, use {\bf Computer Modern
-  Roman} (\LaTeX2e's default; see section \ref{sect:pdf} above).
-Note that the latter is about 10\% less dense than Adobe's Times Roman
-font.
-
-\subsection{Sections}
-
-{\bf Headings}: Type and label section and subsection headings in the
-style shown on the present document.  Use numbered sections (Arabic
-numerals) in order to facilitate cross references. Number subsections
-with the section number and the subsection number separated by a dot,
-in Arabic numerals. Do not number subsubsections.
-
-{\bf Citations}: Citations within the text appear
-in parentheses as~\cite{Gusfield:97} or, if the author's name appears in
-the text itself, as Gusfield~\shortcite{Gusfield:97}. Append lowercase letters to the year in cases of ambiguities. Treat double authors as in~\cite{Aho:72}, but write as in~\cite{Chandra:81} when more than two authors are involved. Collapse multiple citations as in~\cite{Gusfield:97,Aho:72}. Also refrain from using full citations as sentence constituents. We suggest that instead of
-\begin{quote}
-  ``\cite{Gusfield:97} showed that ...''
-\end{quote}
-you use
-\begin{quote}
-``Gusfield \shortcite{Gusfield:97}   showed that ...''
-\end{quote}
-
-If you are using the provided \LaTeX{} and Bib\TeX{} style files, you
-can use the command \verb|\newcite| to get ``author (year)'' citations.
-
-As reviewing will be double-blind, the submitted version of the papers should not include the
-authors' names and affiliations. Furthermore, self-references that
-reveal the author's identity, e.g.,
-\begin{quote}
-``We previously showed \cite{Gusfield:97} ...''
-\end{quote}
-should be avoided. Instead, use citations such as
-\begin{quote}
-``Gusfield \shortcite{Gusfield:97}
-previously showed ... ''
-\end{quote}
-
-Please do not  use anonymous
-citations and  do not include acknowledgements when submitting your papers. Papers that do not conform
-to these requirements may be rejected without review.
-
-\textbf{References}: Gather the full set of references together under
-the heading {\bf References}; place the section before any Appendices,
-unless they contain references. Arrange the references alphabetically
-by first author, rather than by order of occurrence in the text.
-Provide as complete a citation as possible, using a consistent format,
-such as the one for {\em Computational Linguistics\/} or the one in the
-{\em Publication Manual of the American
-Psychological Association\/}~\cite{APA:83}.  Use of full names for
-authors rather than initials is preferred.  A list of abbreviations
-for common computer science journals can be found in the ACM
-{\em Computing Reviews\/}~\cite{ACM:83}.
-
-The \LaTeX{} and Bib\TeX{} style files provided roughly fit the
-American Psychological Association format, allowing regular citations,
-short citations and multiple citations as described above.
-
-{\bf Appendices}: Appendices, if any, directly follow the text and the
-references (but see above).  Letter them in sequence and provide an
-informative title: {\bf Appendix A. Title of Appendix}.
-
-\textbf{Acknowledgment} sections should go as a last section immediately
-before the references. Do not number the acknowledgement section.
-
-\subsection{Footnotes}
-
-{\bf Footnotes}: Put footnotes at the bottom of the page. They may
-be numbered or referred to by asterisks or other
-symbols.\footnote{This is how a footnote should appear.} Footnotes
-should be separated from the text by a line.\footnote{Note the
-line separating the footnotes from the text.}  Footnotes should be in 9 point font.
-
-\subsection{Graphics}
-
-{\bf Illustrations}: Place figures, tables, and photographs in the
-paper near where they are first discussed, rather than at the end, if
-possible.  Wide illustrations may run across both columns and should be placed at
-the top of a page. Color illustrations are discouraged, unless you have verified that
-they will be understandable when printed in black ink.
-
-{\bf Captions}: Provide a caption for every illustration; number each one
-sequentially in the form:  ``Figure 1. Caption of the Figure.'' ``Table 1.
-Caption of the Table.''  Type the captions of the figures and
-tables below the body, using 10 point text.
-
-\section{Translation of non-English Terms}
-
-It is also advised to supplement non-English characters and terms
-with appropriate transliterations and/or translations
-since not all readers understand all such characters and terms.
-
-Inline transliteration or translation can be represented in
-the order of: original-form transliteration ``translation''.
-
-\section{Length of Submission}
-\label{sec:length}
-
-Long papers may consist of up to eight (8) pages of content and an
-an unlimited number of reference pages, and short papers may consist
-of up to four (4) pages of content and an unlimited number of reference pages.
-Papers that do not conform to the specified length and
-formatting requirements are subject to re-submission.
-
-\section{Other Issues}
- 
-Those papers that had software and/or dataset submitted for the review process, should also submit it 
-with the camera-ready paper. Besides, the software and/or dataset should not be anonymous. 
-
-Please note that the publications of ACL2012 will be publicly available at ACL Anthology 
-(http://aclweb.org/anthology-new/) on July 2nd, 2012, one week before the start of the conference. 
-Since some of the authors may have plans to file patents related to their papers in the conference, 
-we are sending this reminder that July 2nd, 2012 may be considered to be the official publication date, 
-instead of the opening day of the conference.
-
-\section*{Acknowledgments}
-
-Do not number the acknowledgment section.\cite{knight1998translation} Do not
-include this section when submitting your paper for review.
+The results indicate that the biggest gain is provided by the INT features,
+which were the binarized intersected features. It also shows that the TF-IDF
+weighting scheme does help improve over the simple 1/0 scaling of word vectors.
+The accuracy generated by the LDA model is significantly lower than the LSA
+model. There could be 2 explanations for this: Firstly, cosine similarity might
+not be the best metric to measure the similarity of 2 distributions, to remedy this
+KL-divergence was used, however even with KL divergence similar results were
+observed. Secondly, it is possible that LDA requires much later training corpus
+to generate robust word vectors. To expedite training of these models a subset
+of the 2012 news crawl data set was used (around 75000 lines). This is probably
+low for LDA.
 \bibliographystyle{plainnat}
 \bibliography{bib}{} 
 \end{document}
