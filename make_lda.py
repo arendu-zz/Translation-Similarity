@@ -1,6 +1,6 @@
 __author__ = 'arenduchintala'
 import gensim
-import sys, pdb
+import sys
 from utilz import tokenize, STOP_WORDS, VEC_LEN
 
 

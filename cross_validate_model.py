@@ -93,14 +93,14 @@ def get_meteor_vec(h1, h2, ref, alpha):
 def get_cs_vec(h1, h2, ref):
     t_hyp1 = [h for h in h1 if h not in h2]
     t_hyp2 = [h for h in h2 if h not in h1]
-    v_hyp1 = get_vec(t_hyp1, True)
-    v_hyp2 = get_vec(t_hyp2, True)
-    v_ref = get_vec(ref, True)
+    v_hyp1 = get_vec(t_hyp1, use_tfifd)
+    v_hyp2 = get_vec(t_hyp2, use_tfifd)
+    v_ref = get_vec(ref, use_tfifd)
     cs1 = cosine_similarity(v_hyp1, v_ref)
     cs2 = cosine_similarity(v_hyp2, v_ref)
     csdiff = abs(cs1 - cs2)
     lsi_vec = []
-    lsi_vec += get_array(v_hyp1, normalize=True) + get_array(v_hyp2, normalize=True) + get_array(v_ref, normalize=True)
+    #lsi_vec += get_array(v_hyp1, normalize=True) + get_array(v_hyp2, normalize=True) + get_array(v_ref, normalize=True)
     nh1 = get_array_n_hot(v_hyp1)
     nh2 = get_array_n_hot(v_hyp2)
     nref = get_array_n_hot(v_ref)
@@ -132,6 +132,8 @@ if __name__ == '__main__':
 
     model_prefix = sys.argv[1]
     model_type = sys.argv[2]  # 'lsi'  # 'lda'
+    use_tfifd = sys.argv[3].strip() == 'True'
+    print 'MODEL_PREFIX:', model_prefix, 'MODEL_TYPE:', model_type, 'TFIDF:', use_tfifd
     lm = kenlm.LanguageModel('data/news.small.20.tok.arpa')
     answers = [int(i) for i in open('eval-data/dev.answers', 'r').readlines()]
     weights = {}
@@ -159,6 +161,7 @@ if __name__ == '__main__':
         if model_type == 'lsi':
             cs_vec = get_cs_vec(hyp1, hyp2, ref)
         elif model_type == 'lda':
+            cs_vec = get_cs_vec(hyp1, hyp2, ref)
             #cs1 = kl_divergence(v_hyp1, v_ref)
             #cs2 = kl_divergence(v_hyp2, v_ref)
             pass
@@ -173,14 +176,15 @@ if __name__ == '__main__':
 
     clf = NuSVC(kernel='rbf', cache_size=6000)
     print np.shape(np.array(X)), np.shape(np.array(answers[st:sp])), np.shape(np.array(sample_weights[st:sp]))
-    clf.fit(np.array(X), np.array(answers[st:sp]), sample_weight=np.array(sample_weights[st:sp]))
+    #clf.fit(np.array(X), np.array(answers[st:sp]), sample_weight=np.array(sample_weights[st:sp]))
 
-    Z = clf.score(np.array(X), np.array(answers[st:sp]))
-    print Z
+    #Z = clf.score(np.array(X), np.array(answers[st:sp]))
+    #print Z
     scores = cross_validation.cross_val_score(clf, np.array(X), np.array(answers[st:sp]))
     print scores, sum(scores) / len(scores)
+    '''
     pickle.dump(clf, open(model_prefix + '-' + model_type + '.clf', "wb"))
-
+    '''
     print 'predicting...'
     P = []
     for idx, (hyp1_txt, hyp2_txt, ref_txt) in enumerate(training_data):
@@ -201,4 +205,5 @@ if __name__ == '__main__':
         train_sample += m_vec
         P.append(train_sample)
     preditions = clf.predict(np.array(P))
-    np.savetxt(model_prefix + '-' + model_type + '.pred', preditions, fmt='%d')
+    np.savetxt(model_prefix + '-' + model_type + '-' + use_tfifd + '.pred', preditions, fmt='%d')
+
