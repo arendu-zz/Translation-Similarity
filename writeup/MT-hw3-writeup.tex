@@ -1,12 +1,3 @@
-%
-% File acl2012.tex
-%
-% Contact: Maggie Li (cswjli@comp.polyu.edu.hk), Michael White (mwhite@ling.osu.edu)
-%%
-%% Based on the style files for ACL2008 by Joakim Nivre and Noah Smith
-%% and that of ACL2010 by Jing-Shin Chang and Philipp Koehn
-
-
 \documentclass[11pt]{article}
 \usepackage{acl2012}
 \usepackage{times}
@@ -55,7 +46,7 @@ Vector Machine (SVM) classifier was used.
 
 \section{Vector Space Model}
 Vector Space Models (VSM) has been used extensively for information retrieval
-and various NLP tasks \cite{Manning:2008:IIR:1394399}. The goal of VSM is to
+and various NLP tasks (\cite{Manning:2008:IIR:1394399}). The goal of VSM is to
 assign a continuous valued vector to each word type in a corpus.\\
 \begin{align*}                                                                                                                                                                   
 \vec{x} &= \{ x_1, x_2, \ldots, x_n\}
@@ -64,8 +55,8 @@ assign a continuous valued vector to each word type in a corpus.\\
  similarity. This gives us a clear way to compare the 2 machine translation
  hypothesis to the reference. First each of the translations were converted to
  their vector representation. This was done using an of-the-shelf Latent
- Semantic Indexing toolkit \cite{rehurek_lrec}. The process essentially
- involves constructing a term-document matrix \cite{turney2010frequency}.
+ Semantic Indexing toolkit (\cite{rehurek_lrec}). The process essentially
+ involves constructing a term-document matrix (\cite{turney2010frequency}).
  Singular Value Decomposition (SVD) is applied to this matrix. The resulting singular value matrix is
  truncated and using this truncated SV matrix a truncated (or low-rank)
  term-document matrix can be regenerated. By looking up the vectors associated
@@ -95,14 +86,42 @@ assign a continuous valued vector to each word type in a corpus.\\
  to train a trigram language model. The ACL 2013 Shared Task in Machine
  Translation provided a large set of corpora, a portion of the 2012 news crawl
  corpus was used to train our LM. KenLM was used to for training and for scoring a
- sentence\cite{heafield2011kenlm}. Using the LM scores, Cosine Similarity
+ sentence (\cite{heafield2011kenlm}). Using the LM scores, Cosine Similarity
  scores and the vector representations themselves training features were created
  which were in turn used to train an SVM classifier. In the next section we will
  discuss the feature engineering used to come up with the training samples for
  classification.
  \section{Feature Engineering}
 In this section we will go over a number of features that were created using
-outputs form the Language model and the vector space model.
+outputs form the Language model, a trained vector space model and the meteor
+score metric.
+\subsection{Meteor Metric}
+The Meteor metric is a commonly used MT evaluation baseline
+(\cite{koehn2010statistical}).
+\begin{align*}
+R(hyp,ref) &= \frac{\mid hyp \cap ref}{\mid ref \mid}\\
+P(hyp,ref) &= \frac{\mid hyp \cap ref}{\mid hyp \mid}\\
+\end{align*}
+In our case we compute $R_1 = R(hyp_1, ref), P_1 = P(hyp_1,ref)$ and $R_2 =
+R(hyp_2, ref), P_2 = P(hyp_2, ref)$. From this we compute the meteor scores
+$M_1,M_2$ for each hypothesis. An $\alpha$ of 0.8 was used as it provided the
+best accuracy (on training samples) during baseline test.
+\begin{align*}
+M_1 &= \frac{R_1 \cdot P_1}{(1-\alpha)R_1 + \alpha P_1}\\
+M_2 &= \frac{R_1 \cdot P_1}{(1-\alpha)R_1 + \alpha P_1}\\
+m_1 &= \begin{cases} 1 &\mbox{if } M_1 > M_2\\
+0\\
+\end{cases}\\
+m_2 &= \begin{cases} 1 &\mbox{if } M_1 < M_2\\
+0\\
+\end{cases}\\
+m_3 &= \begin{cases} 1 &\mbox{if } M_1 = M_2\\
+0\\
+\end{cases}\\
+\vec{M} &= [m_1, m_2, m_3]\\
+\end{align*}
+A on/off vector ($\vec{M}$) was created and added to the set of features using
+the meteor scores and added to the training instance. 
 \subsection{Vector Space Features}
  We also augmented the corpus from which the LSA model was computed,
 with a portion of the 2012 news crawl corpus form 2013 ACL shared task in
@@ -177,6 +196,7 @@ In the expressions below $bin()$ represents the binarization described above.
 \end{align*}
 Thus the total set of features at our disposal from the vector space model are
 \begin{enumerate}
+  \item M Features: the meteor score based binary vector.
   \item CS Features: The cosine similarity metric scores ($cs_1$,$cs_2$,$cs_d$)
   and the associated indicator elements ($f_1$,$f_2$,$f_3$). There are exactly 6
   elements in this feature set.
@@ -187,7 +207,8 @@ Thus the total set of features at our disposal from the vector space model are
   features. These feature set has $2n$ elements.
 \end{enumerate}
 \subsection{Language Model Features}
-The LM features encode into the feature vector how well formed the hypotheses
+The M and CS features show similarity of the hypothesis to the reference, while
+the LM features encode into the feature vector how well formed the hypotheses
 are. KenLM was used to compute this score for each hypotheses and for the
 reference. Using the raw LM score could result in a mis-informed classifier.
 Consider the case where hyp1 is a one-word translation while hyp2 is a longer
@@ -234,28 +255,26 @@ substitute the LSA word vector.
 \subsection{Initial Results}
 In this section, we test all of the feature sets and other tunable attributes on
 the first 10,000 data points provided. This was mainly done to speed up turn
-around time of the intermediate results. The \cite{scikit-learn} toolkit was
-used for classification, an multi-class SVM was used with an RBF kernel. The table below
-shows the average accuracy after running 3-fold cross validation. These numbers could also be increased by increasing the size of the word vector representation (or number
-of topics for LDA), but to get fast results we limited the size to 100.
+around time of the intermediate results. The \cite{scikit-learn} toolkit was used for
+classification, an multi-class SVM was used with an RBF kernel. The table below shows the average accuracy after running 3-fold cross validation. These numbers could also be increased by increasing the size of the word vector representation (or number of topics for LDA), but to get fast results we limited the size to 100.
 \begin{table}[h]
 \begin{center}
 \begin{singlespace}
 \begin{tabular}{|l|l|l|l|l|}
 \hline \bf Features & \bf LSA & \bf TFIDF  & \bf LDA \\ \hline
-1.CL &0.432& 0.410 & 0.436\\
-2.CLF &0.580 & 0.597&0.411\\
-3.CLI & 0.620 & 0.629&0.406\\
-4.CLFI&0.616& 0.629&0.37 \\
+1.CML &0.432& 0.410 & 0.436\\
+2.CMLF &0.580 & 0.597&0.411\\
+3.CMLI & 0.620 & 0.629&0.406\\
+4.CMLFI&0.616& 0.629&0.37 \\
 \hline
 \end{tabular}
 \end{singlespace}
 \end{center}
 \caption{ Accuracy on first 10000 training samples with 3-fold cross validation.
-  (1) CL = CS and LM features, 
-  (2) CLF = CS, LM and FULL features,
-  (3) CLI = CS, LM and INT features,
-  (4) CLFI = CS, LM, FULL and INT}
+  (1) CML = M, CS and LM features, 
+  (2) CMLF = M, CS LM and FULL features,
+  (3) CMLI = M, CS LM and INT features,
+  (4) CMLFI = M, CS LM, FULL and INT}
 \end{table}
 The results indicate that the biggest gain is provided by the INT features,
 which were the binarized intersected features. It also shows that the TF-IDF
@@ -267,7 +286,28 @@ KL-divergence was used, however even with KL divergence similar results were
 observed. Secondly, it is possible that LDA requires much later training corpus
 to generate robust word vectors. To expedite training of these models a subset
 of the 2012 news crawl data set was used (around 75000 lines). This is probably
-low for LDA.
+low for LDA.\\
+Next, 3-fold cross validation was performed on the full (~25,000) training
+samples provided.  The lowest performing
+model in the small (10,000 sample) test was not included in the full cross
+validation.The following results were observed. It should be noted that these
+follow a very similar trend noticed in the smaller test.\\
+\begin{table}[h]
+\begin{center}
+\begin{singlespace}
+\begin{tabular}{|l|l|l|l|l|}
+\hline \bf Features & \bf LSA & \bf TFIDF  & \bf LDA \\ \hline
+2.CMLF &0.582 & 0.600&0.323\\
+3.CMLI & 0.599 & 0.605&0.337\\
+4.CMLFI&0.605&\bf{0.613} &0.337 \\
+\hline
+\end{tabular}
+\end{singlespace}
+\end{center}
+\caption{ Accuracy on full 25000 training samples with 3-fold cross validation.}
+\end{table}
+Since this indicated that the training scales to a larger data set, the winning
+model was submitted. However the only scored 0.47 on the unseen test set.
 \bibliographystyle{plainnat}
 \bibliography{bib}{} 
 \end{document}
