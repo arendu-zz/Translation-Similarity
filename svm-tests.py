@@ -149,7 +149,7 @@ if __name__ == '__main__':
     dictionary = gensim.corpora.Dictionary.load(model_prefix + '.dict')
     tfidf = gensim.models.tfidfmodel.TfidfModel.load(model_prefix + '.tfidf')
     st = 0
-    sp = 10000  # len(answers)
+    sp =len(answers)
     X = []
     for idx, (hyp1_txt, hyp2_txt, ref_txt) in enumerate(training_data[:len(answers[st:sp])]):
         hyp1 = tokenize(hyp1_txt)
@@ -196,17 +196,17 @@ if __name__ == '__main__':
     print 'test samples', np.shape(np.array(P))
     print 'training classifiers...'
     for k in ['rbf', 'linear']:
-        simpleclf = SVC(kernel=k, cache_size=6000)
+        simpleclf = SVC(kernel=k, cache_size=4000)
         simpleclf.fit(np.array(X), np.array(answers[st:sp]), sample_weight=np.array(sample_weights[st:sp]))
-        scores = cross_validation.cross_val_score(simpleclf, np.array(X), np.array(answers[st:sp]), cv=10, n_jobs=4)
-        print 'SVC:', simpleclf.kernel, scores, sum(scores) / len(scores)
+        scores = cross_validation.cross_val_score(simpleclf, np.array(X), np.array(answers[st:sp]))
+        print 'SVC:', simpleclf.kernel, 'CV(3)',sum(scores) / len(scores)
         preditions = simpleclf.predict(np.array(P))
-        np.savetxt('SVC-' + simpleclf.kernel + '.pred', preditions, fmt='%d')
+        np.savetxt('SVC-' + simpleclf.kernel + '.3.pred', preditions, fmt='%d')
 
-        nuclf = NuSVC(kernel=k, cache_size=6000)
+        nuclf = NuSVC(kernel=k, cache_size=4000)
         nuclf.fit(np.array(X), np.array(answers[st:sp]), sample_weight=np.array(sample_weights[st:sp]))
-        scores = cross_validation.cross_val_score(nuclf, np.array(X), np.array(answers[st:sp]), cv=10, n_jobs=4)
-        print 'NuSVC:', nuclf.kernel, scores, sum(scores) / len(scores)
+        scores = cross_validation.cross_val_score(nuclf, np.array(X), np.array(answers[st:sp]))
+        print 'NuSVC:', nuclf.kernel, 'CV(3)',sum(scores) / len(scores)
         preditions = nuclf.predict(np.array(P))
-        np.savetxt('NuSVC-' + nuclf.kernel + '.pred', preditions, fmt='%d')
+        np.savetxt('NuSVC-' + nuclf.kernel + '.3.pred', preditions, fmt='%d')
 
